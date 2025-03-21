@@ -22,7 +22,7 @@
      else {
         $email = $_POST["email"];
         $userpass = $_POST["userpass"];
-        $presentation = $_POST["presentation"];
+        $userId = $_POST["userId"];
         $topicid = $_POST["topicid"];
         $text = htmlspecialchars($_POST["content"], ENT_QUOTES);
         $text = str_replace('<', '&lt;', $text);
@@ -37,15 +37,15 @@
         $nbrposts = $_POST["nbrposts"];
         $mailpass = $_POST["mailpass"];
         
-        echo "Inloggad som <a href=\"mailto:" . $email . "\" title=\"" . $presentation . "\" >" . $email . "</a><br>";
+        echo "Inloggad som <a href=\"mailto:" . $email . "\" title=\"" . $userId . "\" >" . $email . "</a><br>";
         echo "<form action='index.php' method='post'>";
         echo "<input type='hidden' name='email' value='$email'>";
         echo "<input type='hidden' name='pass' value='$userpass'>";
         echo "<input type='submit' name='submit' value='Tillbaka till startsidan'>";
         echo "</form>";
         
-        $stmt = $conn->prepare("INSERT INTO posts (id, topicid, time, user, text) VALUES (?, ?, now(), ?, ?)");
-        $stmt->bind_param("iiss", $nbrposts, $topicid, $email, $text);
+        $stmt = $conn->prepare("INSERT INTO posts (id, text, time, topicId, user) VALUES (?, ?, now(), ?, ?)");
+        $stmt->bind_param("iiss", $text, $nbrposts, $topicid, $email);
         $stmt->execute();
         $stmt->close();
         echo "Inlägget har sparats.<br>";

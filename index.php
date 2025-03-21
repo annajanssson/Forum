@@ -73,6 +73,7 @@
                         $header = $row["header"];
                         $updates = $row["updates"];
                         $originator = $row["originator"];
+                        $userId = $row["userId"];
                         echo "<form action='readtopic.php' method='post'>";
                         echo "<input type='hidden' name='email' value='$email'>";
                         echo "<input type='hidden' name='userpass' value='$pass'>";
