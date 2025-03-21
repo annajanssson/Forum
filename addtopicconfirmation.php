@@ -23,7 +23,8 @@
         $email = $_POST["email"];
         $userpass = $_POST["userpass"];
         $presentation = $_POST["presentation"];
-        $nbrrows = intval($_POST["nbrrows"]);
+        $nbrrows = isset($_POST["nbrrows"]) ? intval($_POST["nbrrows"]) : 0;
+
         echo "Inloggad som <a href=\"mailto:" . $email . "\" title=\"" . $presentation . "\" >" . $email . "</a><br>";
         echo "<form action='index.php' method='post'>";
         echo "<input type='hidden' name='email' value='$email'>";
@@ -31,12 +32,9 @@
         echo "<input type='submit' name='submit' value='Tillbaka till startsidan'>";
         echo "</form>";
         
-        
-        
-        $subscribe = TRUE; // hade varit bättre att ha en boolean-variabel, men av någon anledning funkar inte detta med min databas
-        if ($_POST["subscribe"]) {
-            $subscribe = FALSE;
-        }
+    
+        $subscribe = isset($_POST["subscribe"]) ? 1 : 0;
+
         $header = htmlspecialchars($_POST["header"], ENT_QUOTES);
         $header = str_replace('<', '&lt;', $header);
         $header = str_replace('>', '&gt;', $header);
@@ -57,20 +55,20 @@
         $text = str_replace('Ö', '&Ouml;', $text);
         
         //echo "Nbrrows:" . $nbrrows . "<br>";
-
-        $stmt = $conn->prepare("INSERT INTO topics (id, header, originator, updates) VALUES (?, ?, ?, ?)");
-        $stmt->bind_param("issi", $nbrrows, $header, $email, $subscribe);
+        $stmt = $conn->prepare("INSERT INTO topics (header, originator, updates) VALUES (?, ?, ?)");
+        $stmt->bind_param("ssi", $header, $email, $subscribe);
+        
         
         $stmt->execute();
+        $nbrrows = $conn->insert_id;
         $stmt->close();
         $sql = "SELECT * FROM posts";
         $result = $conn->query($sql);
-        $nbrposts = $result->num_rows;
-        $stmt2 = $conn->prepare("INSERT INTO posts (id, topicid, time, user, text) VALUES (?, ?, now(), ?, ?)");
-        $stmt2->bind_param("iiss", $nbrposts, $nbrrows, $email, $text);
+        $stmt2 = $conn->prepare("INSERT INTO posts (topicid, time, user, text) VALUES (?, now(), ?, ?)");
+        $stmt2->bind_param("iss", $nbrrows, $email, $text);
         $stmt2->execute();
         $stmt2->close();
-        echo "Inlägget har sparats.";
+        echo "Inlägget har sparats";
         
         
         $closed = mysqli_close($conn);
