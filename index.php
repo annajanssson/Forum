@@ -1,38 +1,29 @@
-<?php 
- // uppdaterar en databas och genererar sedan dynamiskt en html-sida
+<?php
  header('Content-type: text/html');
  
  $html = file_get_contents("index.html");
  $html_pieces = explode("<!-- ==xxx== -->", $html);
- echo $html_pieces[0]; // skriv första delen av html-sidan
+ echo $html_pieces[0];
  
  if (count($_POST) > 0) {
      
-     $servername = "localhost"; // OBS: ersätt med rätt namn
+     $servername = "localhost";
      $username = "root";
      $password = "";
      $dbname = "forum";
      
-     // Create connection
      $conn = new mysqli($servername, $username, $password, $dbname);
     
-     // Check connection
      if ($conn->connect_error) {
          die("Connection failed: " . $conn->connect_error);
      } 
      else {
-        // uppkopplad till databasen
         if (count($_POST) > 1) {
-            
-
-            // läs från databasen
-            
             $email = htmlspecialchars($_POST["email"], ENT_QUOTES);
             $pass = htmlspecialchars($_POST["pass"], ENT_QUOTES);
             $sql = "SELECT * FROM users WHERE email='$email' AND passcode='$pass'";
             $result = $conn->query($sql);
             if ($result->num_rows > 0) {
-                // läs data för varje rad
                 $presentation = "";
                 while($row = $result->fetch_assoc()) { // endast en loop, anv.namn+lösen är en unik kombination
                     
@@ -116,7 +107,7 @@
         
         $closed = mysqli_close($conn);
         if ($closed) {
-            //echo "Databasuppkopplingen stängd";
+            echo "Databasuppkopplingen stängd";
         }
         else {
             echo "Lyckades inte stänga databasuppkopplingen";
@@ -128,3 +119,12 @@
 
 
  ?> 
+
+CREATE TABLE likes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    userId VARCHAR(100) NOT NULL,
+    postId INT NOT NULL,
+    FOREIGN KEY (userId) REFERENCES users(userId) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (postId) REFERENCES posts(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    UNIQUE(userId, postId)
+);
