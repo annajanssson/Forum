@@ -1,26 +1,24 @@
 <?php 
- header('Content-type: text/html');
- 
- $html = file_get_contents("index.html");
- $html_pieces = explode("<!-- ==xxx== -->", $html);
- echo $html_pieces[0]; // skriv första delen av html-sidan
- 
- if (count($_POST) > 0) {
-     
-          $servername = "localhost"; // OBS: ersätt med rätt namn
-     $username = "root";
-     $password = "";
-     $dbname = "forum";
-     
+header('Content-type: text/html');
 
-     // Create connection
-     $conn = new mysqli($servername, $username, $password, $dbname);
-    
-     // Check connection
-     if ($conn->connect_error) {
-         die("Connection failed: " . $conn->connect_error);
-     } 
-     else {
+$html = file_get_contents("index.html");
+$html_pieces = explode("<!-- ==xxx== -->", $html);
+echo $html_pieces[0]; // skriv första delen av html-sidan
+
+if (count($_POST) > 0) {
+    $servername = "localhost"; // OBS: ersätt med rätt namn
+    $username = "root";
+    $password = "";
+    $dbname = "forum";
+
+    // Skapa anslutning
+    $conn = new mysqli($servername, $username, $password, $dbname);
+
+    // Kontrollera anslutning
+    if ($conn->connect_error) {
+        die("Connection failed: " . $conn->connect_error);
+    } 
+    else {
         $email = $_POST["email"];
         $userpass = $_POST["userpass"];
         $userId = $_POST["userId"];
@@ -37,22 +35,43 @@
         echo "</form>";
         echo "<h1>" . $header . "</h1>";
         
-        $sql = "SELECT * FROM posts, users WHERE topicid='$topicid' AND user=email";
+        // Hämta alla inlägg
+        $sql = "SELECT posts.id, posts.user, posts.time, posts.text, posts.likes, users.userId FROM posts JOIN users ON posts.user = users.email WHERE posts.topicid='$topicid'";
         $result = $conn->query($sql);
         $nbrposts = $result->num_rows;
-        echo "Det finns " . $nbrposts . " inl&auml;gg i denna tr&aring;d:";
+        echo "Det finns " . $nbrposts . " inlägg i denna tråd:";
         echo "<table class=\"result\">";
         while($row = $result->fetch_assoc()) {
+            $post_id = $row["id"];
+            $user = htmlspecialchars($row["user"], ENT_QUOTES);
+            $time = $row["time"];
+            $text = nl2br(htmlspecialchars($row["text"], ENT_QUOTES));
+            $likes = $row["likes"];
+            $userId = $row["userId"];
+
             echo "<tr class=\"result\">";
             echo "<td>" . "Skrivet av ";
-            //echo $row["user"] . "<br>";
-            echo "<a href=\"mailto:" . $row["user"] . "\" title=\"" . $row["userId"] . "\" >" . $row["user"] . "</a><br>";
-            echo $row["time"] . "</td>";
-            echo "<td>" . $row["text"] . "</td>";
+            echo "<a href=\"mailto:" . $user . "\" title=\"" . $userId . "\" >" . $user . "</a><br>";
+            echo $time . "</td>";
+            echo "<td>" . $text . "</td>";
+            echo "<td>Likes: $likes</td>";
+
+            // Gilla-knapp
+            if (isset($_SESSION["email"])) {
+                echo "<td>
+                        <form action='like.php' method='POST'>
+                            <input type='hidden' name='post_id' value='$post_id'>
+                            <input type='submit' value='Gilla'>
+                        </form>
+                      </td>";
+            } else {
+                echo "<td>Logga in för att gilla detta inlägg.</td>";
+            }
             echo "</tr>";
         }
         echo "</table>";
         
+        // Svara på denna tråd:
         echo "Svara på denna tråd:<br>";
         echo "<form action='postconfirmation.php' method='post'>";
         echo "<input type='hidden' name='email' value='$email'>";
@@ -65,10 +84,6 @@
         echo "<input type='hidden' name='nbrposts' value='$nbrposts'>";
         echo "<input type='hidden' name='header' value='$header'>";
         echo "<textarea name='content' rows='10' cols='50'></textarea><br>";
-        if ($updates == 1) {
-            echo "L&ouml;senord till epostkontot:<br>";
-            echo "<input type='password' name='mailpass'><br>";
-        }
         echo "<input type='submit' name='submit' value='Publicera'>";
         echo "</form>";
         
@@ -79,10 +94,6 @@
         else {
             echo "Lyckades inte stänga databasuppkopplingen";
         }
-     }
-
-
- }
-
- ?> 
- 
+    }
+}
+?> 
